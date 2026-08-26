@@ -327,6 +327,7 @@ var DV360_ENTITY_TYPE;
 (function (DV360_ENTITY_TYPE) {
     DV360_ENTITY_TYPE["LINE_ITEM"] = "LINE_ITEM";
     DV360_ENTITY_TYPE["INSERTION_ORDER"] = "INSERTION_ORDER";
+    DV360_ENTITY_TYPE["CAMPAIGN"] = "CAMPAIGN";
 })(DV360_ENTITY_TYPE || (DV360_ENTITY_TYPE = {}));
 var DV360_ACTION;
 (function (DV360_ACTION) {
@@ -336,7 +337,7 @@ class DV360 extends TargetAgent {
     constructor() {
         super();
         this.requiredParameters = ['advertiserId'];
-        this.baseUrl = 'https://displayvideo.googleapis.com/v2';
+        this.baseUrl = 'https://displayvideo.googleapis.com/v4';
     }
     process(identifier, type, action, evaluation, params) {
         this.ensureRequiredParameters(params);
@@ -356,6 +357,9 @@ class DV360 extends TargetAgent {
         else if (type === DV360_ENTITY_TYPE.INSERTION_ORDER) {
             this.setInsertionOrderStatus(params.advertiserId, identifier, evaluation);
         }
+        else if (type === DV360_ENTITY_TYPE.CAMPAIGN) {
+            this.setCampaignStatus(params.advertiserId, identifier, evaluation);
+        }
     }
     validate(identifier, type, action, evaluation, params) {
         this.ensureRequiredParameters(params);
@@ -368,6 +372,9 @@ class DV360 extends TargetAgent {
         }
         else if (type === DV360_ENTITY_TYPE.INSERTION_ORDER) {
             status = this.isInsertionOrderActive(params.advertiserId, identifier);
+        }
+        else if (type === DV360_ENTITY_TYPE.CAMPAIGN) {
+            status = this.isCampaignActive(params.advertiserId, identifier);
         }
         if (evaluation !== status) {
             errors.push(`Status for ${identifier} (${type}) should be ${evaluation} but is ${status}`);
@@ -398,6 +405,9 @@ class DV360 extends TargetAgent {
     setInsertionOrderStatus(advertiserId, insertionOrderId, status) {
         this.setEntityStatus(advertiserId, insertionOrderId, status, 'insertionOrders');
     }
+    setCampaignStatus(advertiserId, campaignId, status) {
+        this.setEntityStatus(advertiserId, campaignId, status, 'campaigns');
+    }
     getEntity(advertiserId, entityId, entity) {
         const url = `${this.baseUrl}/advertisers/${advertiserId}/${entity}/${entityId}`;
         return this.fetchUrl(url);
@@ -408,6 +418,10 @@ class DV360 extends TargetAgent {
     }
     isInsertionOrderActive(advertiserId, insertionOrderId) {
         const entity = this.getEntity(advertiserId, insertionOrderId, 'insertionOrders');
+        return DV360_ENTITY_STATUS.ACTIVE === entity.entityStatus;
+    }
+    isCampaignActive(advertiserId, campaignId) {
+        const entity = this.getEntity(advertiserId, campaignId, 'campaigns');
         return DV360_ENTITY_STATUS.ACTIVE === entity.entityStatus;
     }
 }

@@ -232,6 +232,12 @@ Given the above JSON source we could add the following to our Sheet:
 
 ### DV360
 
+**Supported Target Identifier Types (`target:type`)**
+
+- `CAMPAIGN`
+- `INSERTION_ORDER`
+- `LINE_ITEM`
+
 **Required parameters**
 
 - `target:advertiserId`

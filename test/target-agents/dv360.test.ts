@@ -64,6 +64,41 @@ describe('DV360 Target Agent', () => {
         'lineItems'
       );
     });
+
+    it('Updates Campaign correctly', () => {
+      const dv360 = new DV360();
+
+      // Set up spies
+      jest.spyOn(DV360.prototype as any, 'fetchUrl').mockReturnValue(null);
+
+      const setCampaignStatusSpy = jest.spyOn(
+        DV360.prototype as any,
+        'setCampaignStatus'
+      );
+
+      const setEntityStatusSpy = jest.spyOn(
+        DV360.prototype as any,
+        'setEntityStatus'
+      );
+
+      // Call function
+      dv360.process(
+        '1234',
+        DV360_ENTITY_TYPE.CAMPAIGN,
+        DV360_ACTION.TOGGLE,
+        true,
+        params
+      );
+
+      // Evaluate
+      expect(setCampaignStatusSpy).toHaveBeenCalledWith('1', '1234', true);
+      expect(setEntityStatusSpy).toHaveBeenCalledWith(
+        '1',
+        '1234',
+        true,
+        'campaigns'
+      );
+    });
   });
 
   describe('validate', () => {
@@ -96,7 +131,40 @@ describe('DV360 Target Agent', () => {
       expect(isLIActiveSpy).toHaveBeenCalledWith('1', '1234');
       expect(getEntitySpy).toHaveBeenCalledWith('1', '1234', 'lineItems');
       expect(fetchUrlSpy).toHaveBeenCalledWith(
-        'https://displayvideo.googleapis.com/v2/advertisers/1/lineItems/1234'
+        'https://displayvideo.googleapis.com/v4/advertisers/1/lineItems/1234'
+      );
+    });
+
+    it('Validates Campaign status match correctly', () => {
+      const dv360 = new DV360();
+
+      const campaign = {
+        entityStatus: 'ENTITY_STATUS_ACTIVE',
+      };
+
+      // Set up spies
+      jest.spyOn(DV360.prototype as any, 'fetchUrl').mockReturnValue(campaign);
+      const isCampaignActiveSpy = jest.spyOn(
+        DV360.prototype as any,
+        'isCampaignActive'
+      );
+      const getEntitySpy = jest.spyOn(DV360.prototype as any, 'getEntity');
+      const fetchUrlSpy = jest.spyOn(DV360.prototype as any, 'fetchUrl');
+
+      // Call function
+      dv360.validate(
+        '1234',
+        DV360_ENTITY_TYPE.CAMPAIGN,
+        DV360_ACTION.TOGGLE,
+        true,
+        params
+      );
+
+      // Evaluate
+      expect(isCampaignActiveSpy).toHaveBeenCalledWith('1', '1234');
+      expect(getEntitySpy).toHaveBeenCalledWith('1', '1234', 'campaigns');
+      expect(fetchUrlSpy).toHaveBeenCalledWith(
+        'https://displayvideo.googleapis.com/v4/advertisers/1/campaigns/1234'
       );
     });
   });

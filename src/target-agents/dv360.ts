@@ -25,6 +25,7 @@ export enum DV360_ENTITY_STATUS {
 export enum DV360_ENTITY_TYPE {
   LINE_ITEM = 'LINE_ITEM',
   INSERTION_ORDER = 'INSERTION_ORDER',
+  CAMPAIGN = 'CAMPAIGN',
 }
 
 export enum DV360_ACTION {
@@ -58,7 +59,7 @@ export class DV360 extends TargetAgent {
     /**
      * DV360 Write API Endpoint Prefix
      */
-    this.baseUrl = 'https://displayvideo.googleapis.com/v2';
+    this.baseUrl = 'https://displayvideo.googleapis.com/v4';
   }
 
   /**
@@ -110,6 +111,8 @@ export class DV360 extends TargetAgent {
       this.setLineItemStatus(params.advertiserId, identifier, evaluation);
     } else if (type === DV360_ENTITY_TYPE.INSERTION_ORDER) {
       this.setInsertionOrderStatus(params.advertiserId, identifier, evaluation);
+    } else if (type === DV360_ENTITY_TYPE.CAMPAIGN) {
+      this.setCampaignStatus(params.advertiserId, identifier, evaluation);
     }
   }
 
@@ -143,6 +146,8 @@ export class DV360 extends TargetAgent {
       status = this.isLineItemActive(params.advertiserId, identifier);
     } else if (type === DV360_ENTITY_TYPE.INSERTION_ORDER) {
       status = this.isInsertionOrderActive(params.advertiserId, identifier);
+    } else if (type === DV360_ENTITY_TYPE.CAMPAIGN) {
+      status = this.isCampaignActive(params.advertiserId, identifier);
     }
 
     if (evaluation !== status) {
@@ -235,6 +240,21 @@ export class DV360 extends TargetAgent {
   }
 
   /**
+   * Change Campaign status (Active/Paused) for the specified Campaign ID.
+   *
+   * @param {string} advertiserId DV360 Advertiser ID
+   * @param {string} campaignId DV360 Campaign ID
+   * @param {boolean} status Activate Campaign on 'true', deactivate on 'false'
+   */
+  private setCampaignStatus(
+    advertiserId: string,
+    campaignId: string,
+    status: boolean
+  ) {
+    this.setEntityStatus(advertiserId, campaignId, status, 'campaigns');
+  }
+
+  /**
    * Get DV360 entity for the specified ID.
    *
    * @param {string} advertiserId DV360 Advertiser ID
@@ -281,6 +301,19 @@ export class DV360 extends TargetAgent {
       insertionOrderId,
       'insertionOrders'
     );
+
+    return DV360_ENTITY_STATUS.ACTIVE === entity.entityStatus;
+  }
+
+  /**
+   * Return true if the entity is active else false.
+   *
+   * @param {string} advertiserId DV360 Advertiser ID
+   * @param {string} campaignId DV360 Campaign ID
+   * @returns {boolean}
+   */
+  private isCampaignActive(advertiserId: string, campaignId: string) {
+    const entity = this.getEntity(advertiserId, campaignId, 'campaigns');
 
     return DV360_ENTITY_STATUS.ACTIVE === entity.entityStatus;
   }

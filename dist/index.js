@@ -266,8 +266,12 @@ var AUTH_MODE;
 })(AUTH_MODE || (AUTH_MODE = {}));
 class Auth {
     constructor(account) {
-        this.authMode = account ? AUTH_MODE.SERVICE_ACCOUNT : AUTH_MODE.USER;
-        this.serviceAccount = account;
+        const saProperty = typeof PropertiesService !== 'undefined'
+            ? PropertiesService.getScriptProperties().getProperty('serviceAccount')
+            : null;
+        const sa = account ?? (saProperty ? JSON.parse(saProperty) : undefined);
+        this.authMode = sa ? AUTH_MODE.SERVICE_ACCOUNT : AUTH_MODE.USER;
+        this.serviceAccount = sa;
     }
     getAuthToken() {
         if (this.authMode === AUTH_MODE.USER) {
@@ -281,10 +285,12 @@ class Auth {
             .setTokenUrl('https://accounts.google.com/o/oauth2/token')
             .setPrivateKey(this.serviceAccount.private_key)
             .setIssuer(this.serviceAccount.client_email)
-            .setSubject(this.serviceAccount.user_email)
             .setPropertyStore(PropertiesService.getScriptProperties())
             .setParam('access_type', 'offline')
             .setScope('https://www.googleapis.com/auth/display-video');
+        if (this.serviceAccount.user_email) {
+            service.setSubject(this.serviceAccount.user_email);
+        }
         service.reset();
         return service.getAccessToken();
     }

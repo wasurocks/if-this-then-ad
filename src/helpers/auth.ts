@@ -25,7 +25,7 @@ export interface ServiceAccount {
   token_uri: 'https://oauth2.googleapis.com/token';
   auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs';
   client_x509_cert_url: string;
-  user_email: string;
+  user_email?: string;
 }
 
 export enum AUTH_MODE {
@@ -68,8 +68,14 @@ export class Auth {
    * @param {?Object} account The service account or empty
    */
   constructor(account?: Object) {
-    this.authMode = account ? AUTH_MODE.SERVICE_ACCOUNT : AUTH_MODE.USER;
-    this.serviceAccount = account as ServiceAccount;
+    const saProperty =
+      typeof PropertiesService !== 'undefined'
+        ? PropertiesService.getScriptProperties().getProperty('serviceAccount')
+        : null;
+    const sa = account ?? (saProperty ? JSON.parse(saProperty) : undefined);
+
+    this.authMode = sa ? AUTH_MODE.SERVICE_ACCOUNT : AUTH_MODE.USER;
+    this.serviceAccount = sa as ServiceAccount;
   }
 
   /**
@@ -95,10 +101,13 @@ export class Auth {
       .setTokenUrl('https://accounts.google.com/o/oauth2/token')
       .setPrivateKey(this.serviceAccount.private_key)
       .setIssuer(this.serviceAccount.client_email)
-      .setSubject(this.serviceAccount.user_email)
       .setPropertyStore(PropertiesService.getScriptProperties())
       .setParam('access_type', 'offline')
       .setScope('https://www.googleapis.com/auth/display-video');
+
+    if (this.serviceAccount.user_email) {
+      service.setSubject(this.serviceAccount.user_email);
+    }
 
     service.reset();
     return service.getAccessToken();

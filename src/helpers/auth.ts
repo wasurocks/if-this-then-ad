@@ -68,11 +68,22 @@ export class Auth {
    * @param {?Object} account The service account or empty
    */
   constructor(account?: Object) {
-    const saProperty =
-      typeof PropertiesService !== 'undefined'
-        ? PropertiesService.getScriptProperties().getProperty('serviceAccount')
-        : null;
-    const sa = account ?? (saProperty ? JSON.parse(saProperty) : undefined);
+    let sa = account;
+
+    if (!sa && typeof PropertiesService !== 'undefined') {
+      const saProperty =
+        PropertiesService.getScriptProperties().getProperty('serviceAccount');
+      if (saProperty) {
+        try {
+          sa = JSON.parse(saProperty);
+        } catch (e) {
+          console.warn(
+            'Failed to parse serviceAccount from Script Properties:',
+            e
+          );
+        }
+      }
+    }
 
     this.authMode = sa ? AUTH_MODE.SERVICE_ACCOUNT : AUTH_MODE.USER;
     this.serviceAccount = sa as ServiceAccount;
